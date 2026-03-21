@@ -2,6 +2,8 @@
 
 Outil de sizing pour VMware Cloud Foundation (VCF).
 
+**[Accéder à l'application](https://floriancasse.github.io/vcf-sizer/)**
+
 ## Fonctionnalités
 
 Calcul des ressources nécessaires pour les composants VCF :
@@ -11,27 +13,12 @@ Calcul des ressources nécessaires pour les composants VCF :
 - **VCF Operations** — VMware Aria Operations (anciennement vRealize Operations)
 - **SDDC Manager** — Ressources pour le gestionnaire SDDC
 - **vCenter Server** — Sizing des vCenter Server Appliances
-- **Aria Suite** — Aria Automation, Aria Operations for Logs, Aria Operations for Networks
 
 ## Stack technique
 
-- Python 3.12+
-- Framework web : à définir
-
-## Démarrage rapide
-
-```bash
-# Cloner le repo
-git clone https://github.com/FlorianCasse/vcf-sizer.git
-cd vcf-sizer
-
-# Créer un environnement virtuel
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Installer les dépendances
-pip install -r requirements.txt
-```
+- HTML / CSS / JavaScript (vanilla)
+- Hébergé sur GitHub Pages
+- Déploiement automatique via GitHub Actions
 
 ## Licence
 

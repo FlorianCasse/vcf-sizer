@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VCF Sizer</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>VCF Sizer</h1>
+            <p class="subtitle">Outil de sizing pour VMware Cloud Foundation</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="sizing-form">
+            <h2>Configuration de l'environnement</h2>
+
+            <div class="form-group">
+                <label for="nsx-edge-size">NSX Edge Node Size</label>
+                <select id="nsx-edge-size">
+                    <option value="small">Small</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="large">Large</option>
+                    <option value="xlarge">Extra Large</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="nsx-edge-count">Nombre de NSX Edge Nodes</label>
+                <input type="number" id="nsx-edge-count" min="2" max="8" value="2">
+            </div>
+
+            <div class="form-group">
+                <label for="nsx-manager-size">NSX Manager Size</label>
+                <select id="nsx-manager-size">
+                    <option value="small">Small</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="large">Large</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="vcf-operations">VCF Operations</label>
+                <select id="vcf-operations">
+                    <option value="none">Non déployé</option>
+                    <option value="small">Small</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="large">Large</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="sddc-manager">SDDC Manager</label>
+                <input type="checkbox" id="sddc-manager" checked disabled>
+                <span class="hint">Toujours requis</span>
+            </div>
+
+            <div class="form-group">
+                <label for="vcenter-size">vCenter Server Size</label>
+                <select id="vcenter-size">
+                    <option value="tiny">Tiny</option>
+                    <option value="small" selected>Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                    <option value="xlarge">Extra Large</option>
+                </select>
+            </div>
+
+            <button id="calculate-btn" class="btn-primary">Calculer le sizing</button>
+        </section>
+
+        <section id="results" class="results hidden">
+            <h2>Résultats du sizing</h2>
+            <div id="results-content"></div>
+            <div class="totals" id="totals"></div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>VCF Sizer — Outil open source de sizing VMware Cloud Foundation</p>
+        </div>
+    </footer>
+
+    <script src="js/sizing-data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

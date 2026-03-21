@@ -6,10 +6,11 @@ Calcule les ressources (CPU, RAM, disque) nécessaires pour les composants VCF :
 NSX Edges, NSX Manager, VCF Operations, SDDC Manager, vCenter Server, Aria Suite.
 
 ## Tech Stack
-- Python 3.12+
-- Language: French for UI/docs, English for code
+- HTML / CSS / JavaScript (vanilla, no build step)
+- Hosted on GitHub Pages (auto-deploy via GitHub Actions on push to main)
+- Sizing data lives in js/sizing-data.js, UI logic in js/app.js
 
 ## Conventions
 - Code and variable names in English
-- Comments and documentation in French when user-facing
-- Follow PEP 8
+- UI labels and user-facing text in French
+- No build tools — static files served directly
