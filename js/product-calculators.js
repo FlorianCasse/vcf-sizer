@@ -1,5 +1,5 @@
 /**
- * Product calculators — NSX Manager, vCenter, VCF Operations, Aria Automation,
+ * Product calculators — NSX Manager, vCenter, VCF Operations, VCF Automation,
  * SDDC Manager, and Summary aggregation.
  */
 
@@ -10,7 +10,7 @@ const ProductCalculators = {
         nsxManager: {},       // { groupId: sizeOverride }
         vcenter: {},          // { domainId: sizeOverride }
         vcfOperations: { size: null, objectsOverride: null, ha: false },
-        ariaAutomation: { enabled: false, cluster: false },
+        vcfAutomation: { enabled: false, cluster: false },
     },
 
     nsxManager: {
@@ -93,11 +93,11 @@ const ProductCalculators = {
         },
     },
 
-    ariaAutomation: {
+    vcfAutomation: {
         calculate() {
-            const o = ProductCalculators.overrides.ariaAutomation;
+            const o = ProductCalculators.overrides.vcfAutomation;
             if (!o.enabled) return null;
-            const spec = SIZING_RULES.ariaAutomation.perNode;
+            const spec = SIZING_RULES.vcfAutomation.perNode;
             const nodes = o.cluster ? 3 : 1;
             return {
                 enabled: true,
@@ -122,7 +122,7 @@ const ProductCalculators = {
      * Aggregate all VMs into management domain vs workload domain categories.
      */
     summary: {
-        calculate(edgeResults, nsxMgrResults, vcenterResults, vcfOpsResult, ariaResult, sddcResult) {
+        calculate(edgeResults, nsxMgrResults, vcenterResults, vcfOpsResult, vcfAutoResult, sddcResult) {
             const mgmt = [];
             const wkld = [];
 
@@ -160,12 +160,12 @@ const ProductCalculators = {
                 });
             }
 
-            // Aria Automation — runs on management domain
-            if (ariaResult) {
+            // VCF Automation — runs on management domain
+            if (vcfAutoResult) {
                 mgmt.push({
-                    component: 'Aria Automation',
-                    count: ariaResult.nodeCount,
-                    ...ariaResult.resources,
+                    component: 'VCF Automation',
+                    count: vcfAutoResult.nodeCount,
+                    ...vcfAutoResult.resources,
                 });
             }
 

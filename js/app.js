@@ -10,7 +10,7 @@ const App = {
     nsxMgrResults: [],
     vcenterResults: [],
     vcfOpsResult: null,
-    ariaResult: null,
+    vcfAutoResult: null,
     sddcResult: null,
     summaryResult: null,
     recommendations: [],
@@ -163,12 +163,12 @@ const App = {
             ProductCalculators.overrides.vcfOperations.ha = e.target.checked;
             this.recalculate();
         }
-        if (e.target.matches('.aria-enabled')) {
-            ProductCalculators.overrides.ariaAutomation.enabled = e.target.checked;
+        if (e.target.matches('.vcfauto-enabled')) {
+            ProductCalculators.overrides.vcfAutomation.enabled = e.target.checked;
             this.recalculate();
         }
-        if (e.target.matches('.aria-cluster')) {
-            ProductCalculators.overrides.ariaAutomation.cluster = e.target.checked;
+        if (e.target.matches('.vcfauto-cluster')) {
+            ProductCalculators.overrides.vcfAutomation.cluster = e.target.checked;
             this.recalculate();
         }
     },
@@ -205,15 +205,15 @@ const App = {
         this.nsxMgrResults = ProductCalculators.nsxManager.calculate();
         this.vcenterResults = ProductCalculators.vcenter.calculate();
         this.vcfOpsResult = ProductCalculators.vcfOperations.calculate();
-        this.ariaResult = ProductCalculators.ariaAutomation.calculate();
+        this.vcfAutoResult = ProductCalculators.vcfAutomation.calculate();
         this.sddcResult = ProductCalculators.sddcManager.calculate();
         this.summaryResult = ProductCalculators.summary.calculate(
             this.edgeResults, this.nsxMgrResults, this.vcenterResults,
-            this.vcfOpsResult, this.ariaResult, this.sddcResult
+            this.vcfOpsResult, this.vcfAutoResult, this.sddcResult
         );
         this.recommendations = RecommendationsEngine.evaluate(
             this.edgeResults, this.nsxMgrResults, this.vcenterResults,
-            this.vcfOpsResult, this.ariaResult
+            this.vcfOpsResult, this.vcfAutoResult
         );
         this.renderActiveTab();
     },
@@ -324,7 +324,7 @@ const App = {
             case 'nsx-manager':    container.innerHTML = this.renderNsxManager(); break;
             case 'vcenter':        container.innerHTML = this.renderVcenter(); break;
             case 'vcf-operations': container.innerHTML = this.renderVcfOps(); break;
-            case 'aria-automation':container.innerHTML = this.renderAria(); break;
+            case 'vcf-automation':container.innerHTML = this.renderVcfAuto(); break;
             case 'sddc-manager':   container.innerHTML = this.renderSddc(); break;
         }
 
@@ -441,7 +441,7 @@ const App = {
             const edge = this.edgeResults.find(e => e.domainId === d.id);
             html += '<div class="edge-domain-panel product-panel" data-domain-id="' + d.id + '">';
             html += '<div class="panel-header">';
-            html += '<h3>' + this.esc(d.name) + '</h3>';
+            html += '<h3>NSX Edge (VCF 9) \u2014 ' + this.esc(d.name) + '</h3>';
             html += '<label class="checkbox-inline"><input type="checkbox" class="edge-enabled-toggle"' +
                 (d.edgeEnabled ? ' checked' : '') + '> Edge cluster déployé</label>';
             html += '</div>';
@@ -587,7 +587,7 @@ const App = {
         for (const m of this.nsxMgrResults) {
             const domainNames = m.domains.map(d => d.name).join(' + ');
             html += '<div class="product-panel">';
-            html += '<h3>NSX Manager \u2014 ' + this.esc(domainNames) + '</h3>';
+            html += '<h3>NSX Manager (VCF 9) \u2014 ' + this.esc(domainNames) + '</h3>';
             html += '<p class="panel-info">Hôtes gérés : ' + m.totalHosts + ' | Cluster : ' + m.nodeCount + ' nœuds</p>';
 
             html += '<div class="recommendation-row">';
@@ -617,7 +617,7 @@ const App = {
         let html = '';
         for (const vc of this.vcenterResults) {
             html += '<div class="product-panel">';
-            html += '<h3>vCenter \u2014 ' + this.esc(vc.domainName) + '</h3>';
+            html += '<h3>vCenter Server (VCF 9) \u2014 ' + this.esc(vc.domainName) + '</h3>';
             html += '<p class="panel-info">Hôtes : ' + vc.hosts + ' | VMs : ' + vc.vms + '</p>';
 
             const recSpec = SIZING_RULES.vcenter.sizes[vc.recommended];
@@ -650,7 +650,7 @@ const App = {
         const overrides = ProductCalculators.overrides.vcfOperations;
 
         let html = '<div class="product-panel">';
-        html += '<h3>VCF Operations (Aria Operations)</h3>';
+        html += '<h3>VCF Operations (VCF 9)</h3>';
         html += '<p class="panel-info">Hôtes total : ' + o.totalHosts +
             ' | VMs total : ' + o.totalVms +
             ' | Objets estimés : ' + o.estimatedObjects + '</p>';
@@ -688,23 +688,23 @@ const App = {
         return html;
     },
 
-    renderAria() {
-        const o = ProductCalculators.overrides.ariaAutomation;
-        const result = this.ariaResult;
-        const spec = SIZING_RULES.ariaAutomation.perNode;
+    renderVcfAuto() {
+        const o = ProductCalculators.overrides.vcfAutomation;
+        const result = this.vcfAutoResult;
+        const spec = SIZING_RULES.vcfAutomation.perNode;
 
         let html = '<div class="product-panel">';
-        html += '<h3>Aria Automation</h3>';
+        html += '<h3>VCF Automation (VCF 9)</h3>';
         html += '<div class="form-group"><label class="checkbox-inline">' +
-            '<input type="checkbox" class="aria-enabled"' + (o.enabled ? ' checked' : '') +
-            '> Aria Automation activé</label></div>';
+            '<input type="checkbox" class="vcfauto-enabled"' + (o.enabled ? ' checked' : '') +
+            '> VCF Automation activé</label></div>';
 
         if (o.enabled && result) {
             html += '<div class="form-group"><label class="checkbox-inline">' +
-                '<input type="checkbox" class="aria-cluster"' + (o.cluster ? ' checked' : '') +
+                '<input type="checkbox" class="vcfauto-cluster"' + (o.cluster ? ' checked' : '') +
                 '> Cluster HA (3 nœuds)</label></div>';
             html += '<p class="panel-info">Par nœud : ' + spec.vcpu + ' vCPU / ' + spec.ram + ' GB RAM / ' + spec.disk + ' GB Disque</p>';
-            html += '<div class="component-card"><h3>Aria Automation x' + result.nodeCount + '</h3><div class="specs">';
+            html += '<div class="component-card"><h3>VCF Automation x' + result.nodeCount + '</h3><div class="specs">';
             html += this.specItem(result.resources.vcpu, 'vCPU');
             html += this.specItem(result.resources.ram + ' GB', 'RAM');
             html += this.specItem(result.resources.disk + ' GB', 'Disque');
@@ -718,7 +718,7 @@ const App = {
     renderSddc() {
         const spec = SIZING_RULES.sddcManager.fixed;
         return '<div class="product-panel">' +
-            '<h3>SDDC Manager</h3>' +
+            '<h3>SDDC Manager (VCF 9)</h3>' +
             '<p class="panel-info">Le SDDC Manager est toujours déployé avec des ressources fixes :</p>' +
             '<div class="specs inline-specs">' +
             this.specItem(spec.vcpu, 'vCPU') +

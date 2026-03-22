@@ -1,18 +1,19 @@
 # VCF Sizer
 
-Outil de sizing pour VMware Cloud Foundation (VCF).
+Outil de sizing pour VMware Cloud Foundation 9 (VCF 9).
 
 **[Accéder à l'application](https://floriancasse.github.io/vcf-sizer/)**
 
 ## Fonctionnalités
 
-Calcul des ressources nécessaires pour les composants VCF :
+Calcul des ressources nécessaires pour les composants VCF 9 :
 
-- **NSX Edges** — Sizing des Edge Nodes (Small, Medium, Large, Extra Large)
-- **NSX Manager** — Cluster NSX Manager (ressources CPU, RAM, disque)
-- **VCF Operations** — VMware Aria Operations (anciennement vRealize Operations)
-- **SDDC Manager** — Ressources pour le gestionnaire SDDC
-- **vCenter Server** — Sizing des vCenter Server Appliances
+- **NSX Edge** — Sizing des Edge Nodes avec recommandation par débit cible
+- **NSX Manager** — Cluster NSX Manager (sizing par nombre d'hôtes)
+- **vCenter Server** — Sizing par hôtes et VMs par domaine
+- **VCF Operations** — Sizing par nombre d'objets monitorés
+- **VCF Automation** — Standalone ou cluster HA
+- **SDDC Manager** — Ressources fixes
 
 ## Stack technique
 

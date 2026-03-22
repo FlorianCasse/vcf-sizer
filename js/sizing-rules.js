@@ -1,7 +1,6 @@
 /**
- * VCF Sizing Rules — data tables + recommend() functions.
- * Sources: Broadcom/VMware documentation & VCF sizing guides.
- * Replaces sizing-data.js and nsx-edge-data.js.
+ * VCF 9 Sizing Rules — data tables + recommend() functions.
+ * Sources: Broadcom/VMware documentation — VMware Cloud Foundation 9.
  */
 
 const SIZING_RULES = {
@@ -144,7 +143,7 @@ const SIZING_RULES = {
         },
     },
 
-    ariaAutomation: {
+    vcfAutomation: {
         perNode: { vcpu: 24, ram: 54, disk: 128 },
     },
 

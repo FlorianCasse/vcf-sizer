@@ -3,7 +3,8 @@
 ## Project Overview
 VCF Sizer — outil de sizing pour VMware Cloud Foundation.
 Calcule les ressources (CPU, RAM, disque) nécessaires pour les composants VCF :
-NSX Edges, NSX Manager, VCF Operations, SDDC Manager, vCenter Server, Aria Suite.
+NSX Edges, NSX Manager, VCF Operations, SDDC Manager, vCenter Server, VCF Automation.
+Données de sizing basées sur VMware Cloud Foundation 9 (VCF 9).
 
 ## Tech Stack
 - HTML / CSS / JavaScript (vanilla, no build step)
@@ -12,10 +13,10 @@ NSX Edges, NSX Manager, VCF Operations, SDDC Manager, vCenter Server, Aria Suite
 ## Architecture JS
 | Fichier | Rôle |
 |---------|------|
-| `js/sizing-rules.js` | Données de sizing + fonctions `recommend()` par produit |
+| `js/sizing-rules.js` | Données de sizing VCF 9 + fonctions `recommend()` par produit |
 | `js/domain-manager.js` | CRUD des workload domains + pattern observer |
 | `js/nsx-edge-calculator.js` | Calcul NSX Edge par domaine (throughput, gateways, limites) |
-| `js/product-calculators.js` | Calculateurs NSX Manager, vCenter, VCF Ops, Aria Auto, Summary |
+| `js/product-calculators.js` | Calculateurs NSX Manager, vCenter, VCF Ops, VCF Automation, Summary |
 | `js/recommendations.js` | Moteur de recommandations par produit et par domaine |
 | `js/app.js` | Rendu DOM, events, tabs, orchestration |
 
