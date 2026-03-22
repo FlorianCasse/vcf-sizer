@@ -1,78 +1,112 @@
 /**
  * NSX Edge sizing calculator — pure functions, no DOM access.
+ * Uses SIZING_RULES for all data.
  */
 
 const NsxEdgeCalculator = {
 
     /**
-     * Auto-enable services required by VKS.
-     * Returns a new services object with NAT and LB forced on if VKS is enabled.
+     * Auto-enable services required by VKS (NAT + Load Balancer).
      */
     autoEnableServices(services, vksEnabled) {
         if (!vksEnabled) return { ...services };
+        return { ...services, nat: true, loadBalancer: true };
+    },
+
+    /**
+     * Full edge calculation for a single domain.
+     */
+    calculateForDomain(domain) {
+        if (!domain.edgeEnabled) {
+            return { enabled: false, domainId: domain.id, domainName: domain.name };
+        }
+
+        const cfg = domain.edgeConfig;
+        const services = this.autoEnableServices(cfg.services, domain.vksEnabled);
+        const rec = SIZING_RULES.nsxEdge.recommend(cfg.targetThroughput, services);
+
+        const size = cfg.sizeOverride || (rec ? rec.size : 'medium');
+        const nodeCount = cfg.nodeCountOverride || (rec ? rec.nodeCount : 2);
+        const haMode = cfg.haMode;
+
+        const throughput = this.calculateThroughput(size, nodeCount, haMode, services);
+        const gateways = this.calculateGatewayTopology(
+            cfg.tier0Count, cfg.tier1Count,
+            domain.vksEnabled, domain.vksClusters || 0, domain.vksNamespaces || 0
+        );
+        const limits = this.checkLimits(size, gateways);
+        const spec = SIZING_RULES.nsxEdge.sizes[size];
+
         return {
-            ...services,
-            nat: true,
-            loadBalancer: true,
+            enabled: true,
+            domainId: domain.id,
+            domainName: domain.name,
+            recommendation: rec,
+            size,
+            nodeCount,
+            haMode,
+            overridden: cfg.sizeOverride !== null,
+            services,
+            throughput,
+            gateways,
+            limits,
+            resources: {
+                vcpu: spec.vcpu * nodeCount,
+                ram: spec.ram * nodeCount,
+                disk: spec.disk * nodeCount,
+            },
         };
     },
 
     /**
-     * Calculate throughput analysis.
+     * Calculate throughput analysis for a given edge configuration.
      */
-    calculateThroughput(edgeSize, edgeCount, haMode, enabledServices) {
-        const baseline = NSX_EDGE_DATA.throughput[edgeSize].gbps;
-
-        // Build degradation breakdown for each enabled service
+    calculateThroughput(edgeSize, edgeCount, haMode, services) {
+        const baseline = SIZING_RULES.nsxEdge.sizes[edgeSize].throughput;
         const breakdown = [];
         let worstFactor = 1.0;
         let worstService = null;
 
-        for (const [service, enabled] of Object.entries(enabledServices)) {
+        for (const [svc, enabled] of Object.entries(services)) {
             if (!enabled) continue;
-            const factors = NSX_EDGE_DATA.serviceDegradation[service];
+            const factors = SIZING_RULES.nsxEdge.serviceDegradation[svc];
             if (!factors) continue;
-
             const factor = factors[edgeSize];
-            const resultGbps = baseline * factor;
             breakdown.push({
-                service,
-                label: NSX_EDGE_DATA.serviceLabels[service],
+                service: svc,
+                label: SIZING_RULES.nsxEdge.serviceLabels[svc],
                 factor,
-                resultGbps,
+                resultGbps: Math.round(baseline * factor * 100) / 100,
             });
-
             if (factor < worstFactor) {
                 worstFactor = factor;
-                worstService = service;
+                worstService = svc;
             }
         }
 
         const effectivePerNode = baseline * worstFactor;
+        let activeNodes, effectiveCluster;
 
-        // HA mode: Active-Standby = 1 node, Active-Active = N nodes * ECMP efficiency
-        let effectiveCluster;
-        let activeNodes;
-        if (haMode === "activeStandby") {
-            effectiveCluster = effectivePerNode;
+        if (haMode === 'activeStandby') {
             activeNodes = 1;
+            effectiveCluster = effectivePerNode;
+        } else if (services.vpnIpsec) {
+            // VPN forces Active-Standby behavior even in ECMP mode
+            activeNodes = 1;
+            effectiveCluster = effectivePerNode;
         } else {
-            // VPN/IPsec forces Active-Standby behavior
-            if (enabledServices.vpnIpsec) {
-                effectiveCluster = effectivePerNode;
-                activeNodes = 1;
-            } else {
-                activeNodes = edgeCount;
-                effectiveCluster = effectivePerNode * edgeCount * NSX_EDGE_DATA.ecmpEfficiency;
-            }
+            activeNodes = edgeCount;
+            effectiveCluster = effectivePerNode * edgeCount * SIZING_RULES.nsxEdge.ecmpEfficiency;
         }
 
         return {
             baselinePerNodeGbps: baseline,
-            effectivePerNodeGbps: effectivePerNode,
+            effectivePerNodeGbps: Math.round(effectivePerNode * 100) / 100,
             effectiveClusterGbps: Math.round(effectiveCluster * 100) / 100,
             worstFactor,
-            worstServiceLabel: worstService ? NSX_EDGE_DATA.serviceLabels[worstService] : null,
+            worstServiceLabel: worstService
+                ? SIZING_RULES.nsxEdge.serviceLabels[worstService]
+                : null,
             activeNodes,
             breakdown,
         };
@@ -81,62 +115,47 @@ const NsxEdgeCalculator = {
     /**
      * Calculate gateway topology totals (including VKS-derived gateways).
      */
-    calculateGatewayTopology(tier0Count, tier1CountManual, vksEnabled, vksClusters, vksNamespacesIngress) {
-        let tier1FromVks = 0;
-        let lbVsFromVks = 0;
-        let snatFromVks = 0;
+    calculateGatewayTopology(tier0Count, tier1Manual, vksEnabled, vksClusters, vksNamespaces) {
+        let tier1Vks = 0, lbVks = 0, snatVks = 0;
 
         if (vksEnabled && vksClusters > 0) {
-            const vks = NSX_EDGE_DATA.vks;
-            tier1FromVks = vksClusters * vks.perCluster.tier1Gateways;
-            lbVsFromVks = (vksClusters * vks.perCluster.lbVirtualServers)
-                        + (vksNamespacesIngress * vks.perNamespaceWithIngress.lbVirtualServers);
-            snatFromVks = vksClusters * vks.perCluster.snatRules;
+            const v = SIZING_RULES.nsxEdge.vks;
+            tier1Vks = vksClusters * v.perCluster.tier1Gateways;
+            lbVks = vksClusters * v.perCluster.lbVirtualServers
+                  + vksNamespaces * v.perNamespaceWithIngress.lbVirtualServers;
+            snatVks = vksClusters * v.perCluster.snatRules;
         }
 
         return {
             tier0Count,
-            tier1Total: tier1CountManual + tier1FromVks,
-            tier1Manual: tier1CountManual,
-            tier1FromVks,
-            totalLbVirtualServers: lbVsFromVks,
-            totalSnatRules: snatFromVks,
+            tier1Total: tier1Manual + tier1Vks,
+            tier1Manual,
+            tier1FromVks: tier1Vks,
+            totalLbVirtualServers: lbVks,
+            totalSnatRules: snatVks,
         };
     },
 
     /**
-     * Calculate edge node resource requirements.
+     * Check gateway counts against capacity limits for the given edge size.
      */
-    calculateResources(edgeSize, edgeCount) {
-        const spec = SIZING_DATA.nsxEdge.sizes[edgeSize];
-        return {
-            vcpu: spec.vcpu * edgeCount,
-            ram: spec.ram * edgeCount,
-            disk: spec.disk * edgeCount,
-            perNode: { ...spec },
-        };
-    },
-
-    /**
-     * Check values against gateway capacity limits.
-     */
-    checkLimits(edgeSize, gatewayTopology) {
-        const limits = NSX_EDGE_DATA.gatewayLimits;
+    checkLimits(edgeSize, gw) {
+        const lim = SIZING_RULES.nsxEdge.gatewayLimits;
         return {
             tier1: {
-                used: gatewayTopology.tier1Total,
-                max: limits.tier1Gateways[edgeSize],
-                exceeded: gatewayTopology.tier1Total > limits.tier1Gateways[edgeSize],
+                used: gw.tier1Total,
+                max: lim.tier1Gateways[edgeSize],
+                exceeded: gw.tier1Total > lim.tier1Gateways[edgeSize],
             },
             lbVirtualServers: {
-                used: gatewayTopology.totalLbVirtualServers,
-                max: limits.lbVirtualServers[edgeSize],
-                exceeded: gatewayTopology.totalLbVirtualServers > limits.lbVirtualServers[edgeSize],
+                used: gw.totalLbVirtualServers,
+                max: lim.lbVirtualServers[edgeSize],
+                exceeded: gw.totalLbVirtualServers > lim.lbVirtualServers[edgeSize],
             },
             natRules: {
-                used: gatewayTopology.totalSnatRules,
-                max: limits.natRules[edgeSize],
-                exceeded: gatewayTopology.totalSnatRules > limits.natRules[edgeSize],
+                used: gw.totalSnatRules,
+                max: lim.natRules[edgeSize],
+                exceeded: gw.totalSnatRules > lim.natRules[edgeSize],
             },
         };
     },

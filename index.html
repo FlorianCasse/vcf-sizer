@@ -15,206 +15,31 @@
     </header>
 
     <main class="container">
-        <!-- Tabs navigation -->
-        <nav class="tabs">
-            <button class="tab active" data-tab="nsx-edge">NSX Edge</button>
+        <!-- Environment definition (always visible above tabs) -->
+        <section id="env-section">
+            <div class="section-header" id="env-header">
+                <h2>Définition de l'environnement</h2>
+                <button class="btn-collapse" id="env-toggle" title="Réduire">&#9650;</button>
+            </div>
+            <div id="env-body">
+                <div id="domain-cards"></div>
+                <button class="btn-secondary" id="add-domain-btn">+ Ajouter un Workload Domain</button>
+            </div>
+        </section>
+
+        <!-- Tab navigation -->
+        <nav class="tabs" id="main-tabs">
+            <button class="tab active" data-tab="summary">Synthèse</button>
+            <button class="tab" data-tab="nsx-edge">NSX Edge</button>
             <button class="tab" data-tab="nsx-manager">NSX Manager</button>
             <button class="tab" data-tab="vcenter">vCenter Server</button>
             <button class="tab" data-tab="vcf-operations">VCF Operations</button>
+            <button class="tab" data-tab="aria-automation">Aria Automation</button>
             <button class="tab" data-tab="sddc-manager">SDDC Manager</button>
         </nav>
 
-        <!-- Tab: NSX Edge -->
-        <div class="tab-panel active" id="tab-nsx-edge">
-            <fieldset class="form-fieldset">
-                <legend>Topologie Edge</legend>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nsx-edge-size">Taille du Edge Node</label>
-                        <select id="nsx-edge-size">
-                            <option value="small">Small — 2 vCPU / 4 GB</option>
-                            <option value="medium" selected>Medium — 4 vCPU / 8 GB</option>
-                            <option value="large">Large — 8 vCPU / 32 GB</option>
-                            <option value="xlarge">Extra Large — 16 vCPU / 64 GB</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="nsx-edge-count">Nombre de Edge Nodes</label>
-                        <input type="number" id="nsx-edge-count" min="2" max="8" value="2">
-                    </div>
-                    <div class="form-group">
-                        <label for="nsx-ha-mode">Mode HA</label>
-                        <select id="nsx-ha-mode">
-                            <option value="activeStandby">Active-Standby</option>
-                            <option value="activeActive">Active-Active (ECMP)</option>
-                        </select>
-                    </div>
-                </div>
-            </fieldset>
-
-            <fieldset class="form-fieldset">
-                <legend>Services activés</legend>
-                <div class="checkbox-group">
-                    <label><input type="checkbox" id="svc-firewall"> Pare-feu stateful (Gateway Firewall)</label>
-                    <label><input type="checkbox" id="svc-nat"> NAT</label>
-                    <label><input type="checkbox" id="svc-lb"> Load Balancer (L4/L7)</label>
-                    <label><input type="checkbox" id="svc-vpn"> VPN / IPsec</label>
-                    <label><input type="checkbox" id="svc-dhcp"> DHCP Relay</label>
-                </div>
-            </fieldset>
-
-            <fieldset class="form-fieldset">
-                <legend>Topologie des Gateways</legend>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="tier0-count">Tier-0 Gateways</label>
-                        <input type="number" id="tier0-count" min="1" max="4" value="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="tier1-count">Tier-1 Gateways (manuels)</label>
-                        <input type="number" id="tier1-count" min="0" max="256" value="1">
-                        <span class="hint">Hors VKS (calculé automatiquement)</span>
-                    </div>
-                </div>
-            </fieldset>
-
-            <fieldset class="form-fieldset">
-                <legend>Intégration VKS (VMware Kubernetes Service)</legend>
-                <div class="form-group">
-                    <label class="checkbox-inline"><input type="checkbox" id="vks-enabled"> VKS déployé</label>
-                </div>
-                <div id="vks-details" class="conditional-group hidden">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="vks-clusters">Nombre de clusters Kubernetes</label>
-                            <input type="number" id="vks-clusters" min="1" max="50" value="1">
-                        </div>
-                        <div class="form-group">
-                            <label for="vks-namespaces-ingress">Namespaces avec Ingress / LB Service</label>
-                            <input type="number" id="vks-namespaces-ingress" min="0" max="500" value="5">
-                        </div>
-                    </div>
-                </div>
-            </fieldset>
-
-            <fieldset class="form-fieldset">
-                <legend>Objectif de débit (optionnel)</legend>
-                <div class="form-group">
-                    <label for="target-throughput">Débit cible (Gbps)</label>
-                    <input type="number" id="target-throughput" min="0" step="0.5" placeholder="Ex: 20">
-                    <span class="hint">Laissez vide si non applicable</span>
-                </div>
-            </fieldset>
-        </div>
-
-        <!-- Tab: NSX Manager -->
-        <div class="tab-panel" id="tab-nsx-manager">
-            <fieldset class="form-fieldset">
-                <legend>Cluster NSX Manager</legend>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nsx-manager-size">Taille du NSX Manager</label>
-                        <select id="nsx-manager-size">
-                            <option value="small">Small — 4 vCPU / 16 GB</option>
-                            <option value="medium" selected>Medium — 6 vCPU / 24 GB</option>
-                            <option value="large">Large — 12 vCPU / 48 GB</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Nombre de nœuds</label>
-                        <input type="number" value="3" disabled>
-                        <span class="hint">Toujours 3 nœuds (cluster)</span>
-                    </div>
-                </div>
-            </fieldset>
-        </div>
-
-        <!-- Tab: vCenter Server -->
-        <div class="tab-panel" id="tab-vcenter">
-            <fieldset class="form-fieldset">
-                <legend>vCenter Server Appliance</legend>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="vcenter-size">Taille du vCenter</label>
-                        <select id="vcenter-size">
-                            <option value="tiny">Tiny — 2 vCPU / 14 GB</option>
-                            <option value="small" selected>Small — 4 vCPU / 21 GB</option>
-                            <option value="medium">Medium — 8 vCPU / 30 GB</option>
-                            <option value="large">Large — 16 vCPU / 40 GB</option>
-                            <option value="xlarge">Extra Large — 24 vCPU / 58 GB</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="vcenter-count">Nombre de vCenter</label>
-                        <input type="number" id="vcenter-count" min="1" max="4" value="1">
-                    </div>
-                </div>
-            </fieldset>
-        </div>
-
-        <!-- Tab: VCF Operations -->
-        <div class="tab-panel" id="tab-vcf-operations">
-            <fieldset class="form-fieldset">
-                <legend>VCF Operations (Aria Operations)</legend>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="vcf-operations">Taille</label>
-                        <select id="vcf-operations">
-                            <option value="none">Non déployé</option>
-                            <option value="small">Small — 4 vCPU / 16 GB</option>
-                            <option value="medium" selected>Medium — 8 vCPU / 32 GB</option>
-                            <option value="large">Large — 16 vCPU / 48 GB</option>
-                        </select>
-                    </div>
-                </div>
-            </fieldset>
-        </div>
-
-        <!-- Tab: SDDC Manager -->
-        <div class="tab-panel" id="tab-sddc-manager">
-            <fieldset class="form-fieldset">
-                <legend>SDDC Manager</legend>
-                <div class="form-group">
-                    <p class="static-info">Le SDDC Manager est toujours déployé avec des ressources fixes :</p>
-                    <div class="specs inline-specs">
-                        <div class="spec-item">
-                            <div class="value">4</div>
-                            <div class="label">vCPU</div>
-                        </div>
-                        <div class="spec-item">
-                            <div class="value">16 GB</div>
-                            <div class="label">RAM</div>
-                        </div>
-                        <div class="spec-item">
-                            <div class="value">500 GB</div>
-                            <div class="label">Disque</div>
-                        </div>
-                    </div>
-                </div>
-            </fieldset>
-        </div>
-
-        <button id="calculate-btn" class="btn-primary">Calculer le sizing</button>
-
-        <!-- Results -->
-        <section id="results" class="results hidden">
-            <h2>Résultats du sizing</h2>
-
-            <!-- Throughput analysis (NSX Edge specific) -->
-            <div id="results-throughput" class="result-panel"></div>
-
-            <!-- Gateway topology -->
-            <div id="results-gateways" class="result-panel"></div>
-
-            <!-- Per-component resources -->
-            <div id="results-resources"></div>
-
-            <!-- Recommendations -->
-            <div id="results-recommendations"></div>
-
-            <!-- Totals -->
-            <div id="totals" class="totals"></div>
-        </section>
+        <!-- Tab content (rendered by app.js) -->
+        <div id="tab-content"></div>
     </main>
 
     <footer>
@@ -223,9 +48,10 @@
         </div>
     </footer>
 
-    <script src="js/sizing-data.js"></script>
-    <script src="js/nsx-edge-data.js"></script>
+    <script src="js/sizing-rules.js"></script>
+    <script src="js/domain-manager.js"></script>
     <script src="js/nsx-edge-calculator.js"></script>
+    <script src="js/product-calculators.js"></script>
     <script src="js/recommendations.js"></script>
     <script src="js/app.js"></script>
 </body>
