@@ -194,11 +194,21 @@ const ProductCalculators = {
             const mgmtTotal = sum(mgmt);
             const wkldTotal = sum(wkld);
 
+            const networkSummary = DomainManager.getAllDomains().map(d => ({
+                domainName: d.name,
+                hosts: d.hosts,
+                pnicCount: d.pnicCount,
+                pnicSpeed: d.pnicSpeed,
+                bandwidthPerHost: d.pnicCount * d.pnicSpeed,
+                totalBandwidth: d.hosts * d.pnicCount * d.pnicSpeed,
+            }));
+
             return {
                 managementVms: mgmt,
                 workloadVms: wkld,
                 mgmtTotal,
                 wkldTotal,
+                networkSummary,
                 grandTotal: {
                     vcpu: mgmtTotal.vcpu + wkldTotal.vcpu,
                     ram: mgmtTotal.ram + wkldTotal.ram,

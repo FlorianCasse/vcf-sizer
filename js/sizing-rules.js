@@ -151,4 +151,18 @@ const SIZING_RULES = {
     sddcManager: {
         fixed: { vcpu: 4, ram: 16, disk: 500 },
     },
+
+    pnic: {
+        speeds: [10, 25, 40, 50, 100],
+        defaultSpeed: 25,
+        counts: [2, 4, 6, 8],
+        defaultCount: 2,
+        speedLabels: {
+            10:  '10 GbE',
+            25:  '25 GbE',
+            40:  '40 GbE',
+            50:  '50 GbE',
+            100: '100 GbE',
+        },
+    },
 };

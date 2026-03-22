@@ -103,6 +103,10 @@ const App = {
             if (cfg) cfg.classList.toggle('hidden', !e.target.checked);
         } else if (e.target.matches('.domain-nsx-sharing')) {
             DomainManager.updateDomain(id, { nsxManagerSharing: e.target.value });
+        } else if (e.target.matches('.domain-pnic-speed')) {
+            DomainManager.updateDomain(id, { pnicSpeed: parseInt(e.target.value) });
+        } else if (e.target.matches('.domain-pnic-count')) {
+            DomainManager.updateDomain(id, { pnicCount: parseInt(e.target.value) });
         }
     },
 
@@ -251,6 +255,27 @@ const App = {
                         '<input type="number" class="domain-vms" min="0" value="' + d.vms + '">' +
                     '</div>' +
                 '</div>' +
+                '<div class="form-row">' +
+                    '<div class="form-group">' +
+                        '<label>Vitesse pNIC</label>' +
+                        '<select class="domain-pnic-speed">' +
+                        SIZING_RULES.pnic.speeds.map(s =>
+                            '<option value="' + s + '"' + (d.pnicSpeed === s ? ' selected' : '') + '>' +
+                            SIZING_RULES.pnic.speedLabels[s] + '</option>'
+                        ).join('') +
+                        '</select>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label>pNICs / hôte</label>' +
+                        '<select class="domain-pnic-count">' +
+                        SIZING_RULES.pnic.counts.map(c =>
+                            '<option value="' + c + '"' + (d.pnicCount === c ? ' selected' : '') + '>' + c + '</option>'
+                        ).join('') +
+                        '</select>' +
+                    '</div>' +
+                '</div>' +
+                '<span class="hint">' + (d.pnicSpeed * d.pnicCount) + ' GbE / hôte \u2014 ' +
+                    (d.pnicSpeed * d.pnicCount * d.hosts) + ' GbE total domaine</span>' +
                 (isMgmt ? '' :
                     '<div class="form-group">' +
                         '<label>NSX Manager</label>' +
@@ -377,6 +402,25 @@ const App = {
             this.specItem(s.grandTotal.ram + ' GB', 'RAM') +
             this.specItem(s.grandTotal.disk + ' GB', 'Disque') +
             '</div></div>';
+
+        // Network bandwidth summary
+        if (s.networkSummary && s.networkSummary.length > 0) {
+            html += '<div class="summary-section">';
+            html += '<h3>Capacité réseau physique (pNICs)</h3>';
+            html += '<table class="summary-table"><thead><tr>' +
+                '<th>Domaine</th><th>Hôtes</th><th>pNICs / hôte</th><th>Vitesse</th><th>BP / hôte (GbE)</th><th>BP totale (GbE)</th>' +
+                '</tr></thead><tbody>';
+            let totalBw = 0;
+            for (const n of s.networkSummary) {
+                totalBw += n.totalBandwidth;
+                html += '<tr><td>' + n.domainName + '</td><td>' + n.hosts +
+                    '</td><td>' + n.pnicCount + '</td><td>' + n.pnicSpeed + ' GbE</td><td>' +
+                    n.bandwidthPerHost + '</td><td>' + n.totalBandwidth + '</td></tr>';
+            }
+            html += '<tr class="total-row"><td>Total</td><td>' + DomainManager.getTotalHosts() +
+                '</td><td></td><td></td><td></td><td>' + totalBw + '</td></tr>';
+            html += '</tbody></table></div>';
+        }
 
         // Recommendations
         if (this.recommendations.length > 0) {

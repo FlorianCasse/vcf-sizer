@@ -86,6 +86,27 @@ const RecommendationsEngine = {
             }
         }
 
+        // ── Physical NIC recommendations ──
+        for (const domain of DomainManager.getAllDomains()) {
+            const bwPerHost = domain.pnicSpeed * domain.pnicCount;
+
+            if (domain.pnicSpeed === 10) {
+                r.push({ severity: 'info', message: '[' + domain.name + '] Les pNICs 10 GbE sont limitées. 25 GbE ou plus est recommandé pour les déploiements VCF en production.' });
+            }
+
+            // Edge throughput vs physical bandwidth
+            if (domain.edgeEnabled) {
+                const edge = edgeResults.find(e => e.domainId === domain.id);
+                if (edge && edge.enabled && edge.throughput.effectiveClusterGbps > bwPerHost) {
+                    r.push({
+                        severity: 'warning',
+                        message: '[' + domain.name + '] Le débit Edge effectif (' + edge.throughput.effectiveClusterGbps +
+                            ' Gbps) dépasse la bande passante physique par hôte (' + bwPerHost + ' GbE). Augmentez la vitesse ou le nombre de pNICs.',
+                    });
+                }
+            }
+        }
+
         return r;
     },
 };
